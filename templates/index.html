@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HANA - 占星術ハウス・カスプ計算</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0b0c1b 0%, #151833 50%, #221230 100%);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-focus: rgba(168, 85, 247, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-primary: #a855f7;
+            --accent-secondary: #ec4899;
+            --accent-glow: 0 0 20px rgba(168, 85, 247, 0.5);
+            --border-radius: 20px;
+            --font-display: 'Cinzel', serif;
+            --font-sans: 'Noto Sans JP', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Background star dust effect */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        .app-card {
+            width: 100%;
+            max-width: 700px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            text-align: center;
+            letter-spacing: 3px;
+            background: linear-gradient(to right, var(--text-primary), var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-weight: 300;
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .app-card {
+                padding: 20px;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group.full-width {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 600px) {
+            .input-group.full-width {
+                grid-column: span 1;
+            }
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        input, select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+        }
+
+        /* Custom styling for date/time inputs on dark bg */
+        input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        select option {
+            background-color: #1a1b36;
+            color: var(--text-primary);
+        }
+
+        .btn-submit {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        /* Results Area */
+        .results-container {
+            margin-top: 30px;
+            display: none;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 25px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .results-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            color: var(--text-primary);
+        }
+
+        .location-info {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .ascmc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .ascmc-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.02);
+        }
+
+        .ascmc-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .ascmc-val {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #f472b6; /* Pink-400 */
+            text-shadow: 0 0 8px rgba(244, 114, 182, 0.3);
+        }
+
+        .cusp-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .cusp-table th, .cusp-table td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        .cusp-table th {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--glass-border);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cusp-table tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: background 0.2s ease;
+        }
+
+        .cusp-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .cusp-table td {
+            font-size: 0.95rem;
+        }
+
+        .house-num {
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .house-value {
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+
+        /* Loader */
+        .loader-container {
+            display: none;
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent-primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-card">
+        <h1>HANA</h1>
+        <p class="subtitle">ASTROLOGY CUSP CALCULATOR</p>
+        
+        <form id="calcForm" onsubmit="calculate(event)">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="birthDate">生年月日</label>
+                    <input type="date" id="birthDate" required value="2000-01-01">
+                </div>
+                <div class="input-group">
+                    <label for="birthTime">出生時間</label>
+                    <input type="time" id="birthTime" required value="12:00">
+                </div>
+                <div class="input-group">
+                    <label for="birthPlace">出生場所 (市町村やランドマーク名など)</label>
+                    <input type="text" id="birthPlace" placeholder="例: 東京都新宿区" required value="東京都新宿区">
+                </div>
+                <div class="input-group">
+                    <label for="houseSystem">ハウス分割方式</label>
+                    <select id="houseSystem">
+                        <option value="P">Placidus (プラシーダス)</option>
+                        <option value="K">Koch (コッホ)</option>
+                        <option value="E">Equal (イコール)</option>
+                        <option value="W">Whole Sign (ホールサイン)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-submit">星図を計算する</button>
+        </form>
+
+        <div class="loader-container" id="loader">
+            <div class="loader"></div>
+            <p style="margin-top: 10px; color: var(--text-secondary); font-size: 0.9rem;">宇宙データを算出中...</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="results-container" id="results">
+            <div class="results-header">
+                <h2>CUSP TABLE</h2>
+                <div class="location-info" id="locationInfo">位置: 未検出</div>
+            </div>
+
+            <div class="ascmc-grid">
+                <div class="ascmc-box">
+                    <div class="ascmc-label">ASC (アセンダント)</div>
+                    <div class="ascmc-val" id="ascVal">-</div>
+                </div>
+                <div class="ascmc-box">
+                    <div class="ascmc-label">MC (ミディアム・コエリ)</div>
+                    <div class="ascmc-val" id="mcVal">-</div>
+                </div>
+            </div>
+
+            <table class="cusp-table">
+                <thead>
+                    <tr>
+                        <th>ハウス</th>
+                        <th>位置 (カスプ)</th>
+                    </tr>
+                </thead>
+                <tbody id="cuspTableBody">
+                    <!-- Javascriptで動的に生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function calculate(event) {
+            event.preventDefault();
+            
+            const birthDate = document.getElementById('birthDate').value;
+            const birthTime = document.getElementById('birthTime').value;
+            const birthPlace = document.getElementById('birthPlace').value;
+            const houseSystem = document.getElementById('houseSystem').value;
+            
+            const loader = document.getElementById('loader');
+            const results = document.getElementById('results');
+            const errorDiv = document.getElementById('errorMessage');
+            
+            loader.style.display = 'block';
+            results.style.display = 'none';
+            errorDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        birth_date: birthDate,
+                        birth_time: birthTime,
+                        birth_place: birthPlace,
+                        house_system: houseSystem
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || '計算中にエラーが発生しました。');
+                }
+                
+                // データのマッピング
+                document.getElementById('locationInfo').innerText = `解析地: ${data.resolved_location.display_name} (北緯 ${data.resolved_location.latitude.toFixed(4)}°, 東経 ${data.resolved_location.longitude.toFixed(4)}° / タイムゾーン: ${data.resolved_location.timezone})`;
+                document.getElementById('ascVal').innerText = data.data.asc.formatted;
+                document.getElementById('mcVal').innerText = data.data.mc.formatted;
+                
+                const tbody = document.getElementById('cuspTableBody');
+                tbody.innerHTML = '';
+                
+                data.data.cusps.forEach(cusp => {
+                    const tr = document.createElement('tr');
+                    
+                    const tdHouse = document.createElement('td');
+                    tdHouse.className = 'house-num';
+                    tdHouse.innerText = `第 ${cusp.house} ハウス`;
+                    
+                    const tdVal = document.createElement('td');
+                    tdVal.className = 'house-value';
+                    tdVal.innerText = cusp.formatted;
+                    
+                    tr.appendChild(tdHouse);
+                    tr.appendChild(tdVal);
+                    tbody.appendChild(tr);
+                });
+                
+                results.style.display = 'block';
+            } catch (error) {
+                errorDiv.innerText = error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
