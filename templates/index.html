@@ -7,6 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #0b0c1b 0%, #151833 50%, #221230 100%);
@@ -321,6 +323,156 @@
             font-size: 0.9rem;
             line-height: 1.4;
         }
+
+        /* 生命の樹カラー表示スタイル */
+        .tree-section {
+            margin-top: 40px;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 30px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .tree-section h3 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            text-align: center;
+            margin-bottom: 25px;
+            background: linear-gradient(to right, var(--text-primary), var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tree-container {
+            position: relative;
+            width: 100%;
+            max-width: 460px;
+            margin: 0 auto;
+            aspect-ratio: 1 / 1.25;
+            background: rgba(255, 255, 255, 0.01);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            overflow: visible;
+        }
+
+        .tree-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .tree-svg line {
+            stroke: rgba(191, 199, 216, 0.4);
+            stroke-width: 2px;
+            vector-effect: non-scaling-stroke;
+            transition: all 0.5s ease;
+        }
+
+        .tree-node {
+            position: absolute;
+            width: 17%;
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            z-index: 2;
+            cursor: default;
+            user-select: none;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .tree-node .house-label {
+            font-weight: 700;
+            font-size: calc(9px + 0.3vw);
+            color: var(--text-secondary);
+            line-height: 1.1;
+            transition: color 0.5s ease;
+        }
+
+        .tree-node .sign-label {
+            font-size: calc(10px + 0.3vw);
+            font-weight: 700;
+            margin: 2px 0;
+            line-height: 1.1;
+        }
+
+        .tree-node .color-label {
+            font-size: calc(8px + 0.2vw);
+            opacity: 0.8;
+            line-height: 1.1;
+        }
+
+        .tree-node .meaning-label {
+            position: absolute;
+            top: 105%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 130px;
+            font-size: calc(8px + 0.15vw);
+            color: #2f2f2f !important; /* 濃いグレーに統一 */
+            text-shadow: 0 0 3px rgba(255, 255, 255, 0.5), 0 0 6px rgba(255, 255, 255, 0.3); /* 宇宙背景でも視認性を確保 */
+            pointer-events: none;
+            line-height: 1.2;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.5s ease;
+            white-space: nowrap; /* PCでは1行で表示 */
+        }
+
+        .tree-node:hover {
+            transform: translate(-50%, -50%) scale(1.15);
+            border-color: rgba(255, 255, 255, 0.6) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+            z-index: 10;
+        }
+
+        .tree-node:hover .meaning-label {
+            color: #2f2f2f !important;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8), 0 0 10px rgba(255, 255, 255, 0.6); /* 光彩を強化 */
+            font-weight: 700;
+        }
+
+        @media (max-width: 600px) {
+            .tree-container {
+                max-width: 100%;
+                padding: 10px;
+                margin-bottom: 40px; /* 下部の余白を確保 */
+            }
+            .tree-node {
+                width: 19%;
+            }
+            .tree-node .house-label {
+                font-size: 8px;
+            }
+            .tree-node .sign-label {
+                font-size: 9px;
+                margin: 1px 0;
+            }
+            .tree-node .color-label {
+                font-size: 7.5px;
+            }
+            .tree-node .meaning-label {
+                width: 80px;
+                font-size: 8px;
+                top: 103%;
+                line-height: 1.1;
+                white-space: normal; /* スマホでは長ければ自動折り返し */
+                color: #2f2f2f !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -333,7 +485,7 @@
             <div class="form-grid">
                 <div class="input-group">
                     <label for="birthDate">生年月日</label>
-                    <input type="date" id="birthDate" required value="2000-01-01">
+                    <input type="text" id="birthDate" required value="2000-01-01" placeholder="例：2000/01/01">
                 </div>
                 <div class="input-group">
                     <label for="birthTime">出生時間</label>
@@ -392,6 +544,129 @@
                     <!-- Javascriptで動的に生成 -->
                 </tbody>
             </table>
+
+            <!-- 生命の樹カラーマップ -->
+            <div class="tree-section">
+                <h3>生命の樹カラーマップ</h3>
+                <div class="tree-container" id="treeContainer">
+                    <svg class="tree-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <!-- 縦線 -->
+                        <line x1="20" y1="28" x2="20" y2="46" /> <!-- 3 - 5 -->
+                        <line x1="20" y1="46" x2="20" y2="64" /> <!-- 5 - 8 -->
+                        <line x1="20" y1="64" x2="20" y2="82" /> <!-- 8 - 12 -->
+                        
+                        <line x1="50" y1="10" x2="50" y2="46" /> <!-- 1 - 6 -->
+                        <line x1="50" y1="46" x2="50" y2="64" /> <!-- 6 - 9 -->
+                        <line x1="50" y1="64" x2="50" y2="82" /> <!-- 9 - 10 -->
+                        
+                        <line x1="80" y1="28" x2="80" y2="46" /> <!-- 2 - 4 -->
+                        <line x1="80" y1="46" x2="80" y2="64" /> <!-- 4 - 7 -->
+                        <line x1="80" y1="64" x2="80" y2="82" /> <!-- 7 - 11 -->
+
+                        <!-- 斜め・横線 -->
+                        <line x1="50" y1="10" x2="20" y2="28" /> <!-- 1 - 3 -->
+                        <line x1="50" y1="10" x2="80" y2="28" /> <!-- 1 - 2 -->
+                        <line x1="20" y1="28" x2="80" y2="28" /> <!-- 3 - 2 -->
+                        
+                        <line x1="20" y1="28" x2="50" y2="46" /> <!-- 3 - 6 -->
+                        <line x1="80" y1="28" x2="50" y2="46" /> <!-- 2 - 6 -->
+                        <line x1="20" y1="46" x2="80" y2="46" /> <!-- 5 - 4 -->
+                        
+                        <line x1="20" y1="46" x2="50" y2="64" /> <!-- 5 - 9 -->
+                        <line x1="80" y1="46" x2="50" y2="64" /> <!-- 4 - 9 -->
+                        <line x1="50" y1="46" x2="20" y2="64" /> <!-- 6 - 8 -->
+                        <line x1="50" y1="46" x2="80" y2="64" /> <!-- 6 - 7 -->
+                        <line x1="20" y1="64" x2="80" y2="64" /> <!-- 8 - 7 -->
+                        
+                        <line x1="20" y1="64" x2="50" y2="82" /> <!-- 8 - 10 -->
+                        <line x1="80" y1="64" x2="50" y2="82" /> <!-- 7 - 10 -->
+                        <line x1="20" y1="82" x2="50" y2="82" /> <!-- 12 - 10 -->
+                        <line x1="80" y1="82" x2="50" y2="82" /> <!-- 11 - 10 -->
+                        <line x1="20" y1="82" x2="80" y2="82" /> <!-- 12 - 11 -->
+                    </svg>
+
+                    <!-- ハウスノード -->
+                    <!-- 1段目 -->
+                    <div class="tree-node" id="node-1" style="left: 50%; top: 10%;">
+                        <div class="house-label">1ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">魂の使命・自分自身</div>
+                    </div>
+                    <!-- 2段目 -->
+                    <div class="tree-node" id="node-3" style="left: 20%; top: 28%;">
+                        <div class="house-label">3ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">探求・知識</div>
+                    </div>
+                    <div class="tree-node" id="node-2" style="left: 80%; top: 28%;">
+                        <div class="house-label">2ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">金銭・所有</div>
+                    </div>
+                    <!-- 3段目 -->
+                    <div class="tree-node" id="node-5" style="left: 20%; top: 46%;">
+                        <div class="house-label">5ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">想像・子供</div>
+                    </div>
+                    <div class="tree-node" id="node-6" style="left: 50%; top: 46%;">
+                        <div class="house-label">6ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">健康・中心・本質・才能</div>
+                    </div>
+                    <div class="tree-node" id="node-4" style="left: 80%; top: 46%;">
+                        <div class="house-label">4ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">家庭・母</div>
+                    </div>
+                    <!-- 4段目 -->
+                    <div class="tree-node" id="node-8" style="left: 20%; top: 64%;">
+                        <div class="house-label">8ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">社会貢献</div>
+                    </div>
+                    <div class="tree-node" id="node-9" style="left: 50%; top: 64%;">
+                        <div class="house-label">9ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">外国・精神世界・潜在的パワー</div>
+                    </div>
+                    <div class="tree-node" id="node-7" style="left: 80%; top: 64%;">
+                        <div class="house-label">7ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">パートナー・結婚</div>
+                    </div>
+                    <!-- 5段目 -->
+                    <div class="tree-node" id="node-12" style="left: 20%; top: 82%;">
+                        <div class="house-label">12ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">美容・調和・第一印象</div>
+                    </div>
+                    <div class="tree-node" id="node-10" style="left: 50%; top: 82%;">
+                        <div class="house-label">10ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">人間関係・天職</div>
+                    </div>
+                    <div class="tree-node" id="node-11" style="left: 80%; top: 82%;">
+                        <div class="house-label">11ハウス</div>
+                        <div class="sign-label">-</div>
+                        <div class="color-label">-</div>
+                        <div class="meaning-label">友人・知人・希望</div>
+                    </div>
+                </div>
+            </div>
+            <!-- PDF鑑定書作成ボタン -->
+            <button type="button" class="btn-submit" id="btnPdf" onclick="generatePDF()" style="margin-top: 30px; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);">PDF鑑定書を作成</button>
         </div>
     </div>
 
@@ -399,7 +674,18 @@
         async function calculate(event) {
             event.preventDefault();
             
-            const birthDate = document.getElementById('birthDate').value;
+            const rawBirthDate = document.getElementById('birthDate').value.trim();
+            // スラッシュをハイフンに統一
+            let birthDate = rawBirthDate.replace(/\//g, '-');
+            // 一桁の月日を0埋め (例: 2000-1-1 -> 2000-01-01)
+            const dateParts = birthDate.split('-');
+            if (dateParts.length === 3) {
+                const year = dateParts[0];
+                const month = dateParts[1].padStart(2, '0');
+                const day = dateParts[2].padStart(2, '0');
+                birthDate = `${year}-${month}-${day}`;
+            }
+
             const birthTime = document.getElementById('birthTime').value;
             const birthPlace = document.getElementById('birthPlace').value;
             const houseSystem = document.getElementById('houseSystem').value;
@@ -440,6 +726,29 @@
                 const tbody = document.getElementById('cuspTableBody');
                 tbody.innerHTML = '';
                 
+                // 星座とカラーの対応関係の定義
+                const signColorMap = {
+                    "水瓶座": { name: "バイオレット", color: "#a855f7", textDark: false },
+                    "魚座": { name: "マゼンダ", color: "#ec4899", textDark: false },
+                    "牡羊座": { name: "レッド", color: "#ef4444", textDark: false },
+                    "牡牛座": { name: "コーラル", color: "#f97316", textDark: false },
+                    "双子座": { name: "オレンジ", color: "#f59e0b", textDark: false },
+                    "蟹座": { name: "ゴールド", color: "#eab308", textDark: true },
+                    "獅子座": { name: "イエロー", color: "#facc15", textDark: true },
+                    "乙女座": { name: "オリーブ", color: "#84cc16", textDark: false },
+                    "天秤座": { name: "グリーン", color: "#22c55e", textDark: false },
+                    "蠍座": { name: "ターコイズ", color: "#06b6d4", textDark: false },
+                    "射手座": { name: "ブルー", color: "#3b82f6", textDark: false },
+                    "山羊座": { name: "ロイヤルブルー", color: "#6366f1", textDark: false }
+                };
+
+                function hexToRgb(hex) {
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    return `${r}, ${g}, ${b}`;
+                }
+                
                 data.data.cusps.forEach(cusp => {
                     const tr = document.createElement('tr');
                     
@@ -454,6 +763,35 @@
                     tr.appendChild(tdHouse);
                     tr.appendChild(tdVal);
                     tbody.appendChild(tr);
+
+                    // 生命の樹ノードの更新
+                    const node = document.getElementById(`node-${cusp.house}`);
+                    if (node) {
+                        const signName = cusp.formatted.split(' ')[0];
+                        const colorConfig = signColorMap[signName];
+                        
+                        if (colorConfig) {
+                            node.querySelector('.sign-label').innerText = signName;
+                            node.querySelector('.color-label').innerText = colorConfig.name;
+                            
+                            const rgb = hexToRgb(colorConfig.color);
+                            
+                            // すべて白文字で統一
+                            node.style.color = '#ffffff';
+                            node.style.borderColor = colorConfig.color;
+                            node.querySelector('.house-label').style.color = '#ffffff';
+                            
+                            if (colorConfig.textDark) {
+                                // 明るい色（イエロー、ゴールド）では白文字が見えやすいように背景の不透明度を調整し、影を強くする
+                                node.style.background = `rgba(${rgb}, 0.35)`;
+                                node.style.textShadow = '0 1px 4px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.9)';
+                            } else {
+                                node.style.background = `rgba(${rgb}, 0.25)`;
+                                node.style.textShadow = `0 0 8px rgba(${rgb}, 0.6), 0 1px 3px rgba(0, 0, 0, 0.5)`;
+                            }
+                            node.style.boxShadow = `0 0 20px rgba(${rgb}, 0.65), inset 0 0 10px rgba(${rgb}, 0.35)`;
+                        }
+                    }
                 });
                 
                 results.style.display = 'block';
@@ -462,6 +800,280 @@
                 errorDiv.style.display = 'block';
             } finally {
                 loader.style.display = 'none';
+            }
+        }
+
+        async function generatePDF() {
+            const btnPdf = document.getElementById('btnPdf');
+            const originalText = btnPdf.innerText;
+            btnPdf.disabled = true;
+            btnPdf.innerText = 'PDF生成中...';
+
+            const { jsPDF } = window.jspdf;
+            
+            // 一時的な印刷用コンテナを作成（画面外に配置）
+            const printContainer = document.createElement('div');
+            printContainer.style.position = 'fixed';
+            printContainer.style.left = '-9999px';
+            printContainer.style.top = '0';
+            printContainer.style.width = '794px'; // A4サイズ幅比率 (96dpi換算)
+            printContainer.style.background = '#fbf9f3'; // 薄いクリーム色
+            printContainer.style.color = '#1e1b4b'; // 濃紺
+            printContainer.style.fontFamily = "'Noto Sans JP', sans-serif";
+            printContainer.style.boxSizing = 'border-box';
+            printContainer.style.zIndex = '-9999';
+
+            // 1ページ目のコンテナ
+            const page1Div = document.createElement('div');
+            page1Div.style.width = '794px';
+            page1Div.style.height = '1123px'; // A4高さ (96dpi換算)
+            page1Div.style.padding = '60px 50px';
+            page1Div.style.boxSizing = 'border-box';
+            page1Div.style.display = 'flex';
+            page1Div.style.flexDirection = 'column';
+            page1Div.style.justifyContent = 'space-between';
+
+            // 1ページ目のコンテンツ
+            const birthDate = document.getElementById('birthDate').value;
+            const birthTime = document.getElementById('birthTime').value;
+            const birthPlace = document.getElementById('birthPlace').value;
+            const houseSystemText = document.getElementById('houseSystem').options[document.getElementById('houseSystem').selectedIndex].text;
+            const locationInfo = document.getElementById('locationInfo').innerText;
+            const ascVal = document.getElementById('ascVal').innerText;
+            const mcVal = document.getElementById('mcVal').innerText;
+
+            const cuspRows = Array.from(document.querySelectorAll('#cuspTableBody tr'));
+            let tableHtml = `
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #1e1b4b; margin-top: 15px;">
+                    <thead>
+                        <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+                            <th style="padding: 10px; text-align: left; font-weight: 700;">ハウス</th>
+                            <th style="padding: 10px; text-align: left; font-weight: 700;">位置 (カスプ)</th>
+                            <th style="padding: 10px; text-align: left; font-weight: 700;">ハウス</th>
+                            <th style="padding: 10px; text-align: left; font-weight: 700;">位置 (カスプ)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            for (let i = 0; i < 6; i++) {
+                const row1 = cuspRows[i];
+                const row2 = cuspRows[i + 6];
+                const h1 = row1.children[0].innerText;
+                const v1 = row1.children[1].innerText;
+                const h2 = row2.children[0].innerText;
+                const v2 = row2.children[1].innerText;
+                
+                tableHtml += `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 10px; font-weight: bold; color: #475569;">${h1}</td>
+                        <td style="padding: 10px;">${v1}</td>
+                        <td style="padding: 10px; font-weight: bold; color: #475569;">${h2}</td>
+                        <td style="padding: 10px;">${v2}</td>
+                    </tr>
+                `;
+            }
+            tableHtml += `</tbody></table>`;
+
+            page1Div.innerHTML = `
+                <div>
+                    <!-- ヘッダー -->
+                    <div style="text-align: center; border-bottom: 2px solid #a855f7; padding-bottom: 20px; margin-bottom: 40px;">
+                        <h1 style="font-family: 'Cinzel', serif; font-size: 28px; color: #1e1b4b; margin: 0; letter-spacing: 3px; font-weight: 700;">HANA 生命の樹カラー鑑定書</h1>
+                        <p style="font-size: 12px; color: #64748b; margin-top: 6px; letter-spacing: 2px;">ASTROLOGY & TREE OF LIFE REPORT</p>
+                    </div>
+
+                    <!-- 鑑定データ -->
+                    <div style="margin-bottom: 35px;">
+                        <h3 style="font-size: 16px; border-left: 4px solid #ec4899; padding-left: 10px; margin-bottom: 15px; color: #1e1b4b; font-weight: bold;">鑑定データ</h3>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #1e1b4b;">
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #e2e8f0; background: #f8fafc; font-weight: bold; width: 20%;">生年月日</td>
+                                <td style="padding: 10px; border: 1px solid #e2e8f0; width: 30%;">${birthDate}</td>
+                                <td style="padding: 10px; border: 1px solid #e2e8f0; background: #f8fafc; font-weight: bold; width: 20%;">出生時間</td>
+                                <td style="padding: 10px; border: 1px solid #e2e8f0; width: 30%;">${birthTime}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #e2e8f0; background: #f8fafc; font-weight: bold;">出生場所</td>
+                                <td style="padding: 10px; border: 1px solid #e2e8f0;">${birthPlace}</td>
+                                <td style="padding: 10px; border: 1px solid #e2e8f0; background: #f8fafc; font-weight: bold;">分割方式</td>
+                                <td style="padding: 10px; border: 1px solid #e2e8f0;">${houseSystemText}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #e2e8f0; background: #f8fafc; font-weight: bold;">位置情報</td>
+                                <td colspan="3" style="padding: 10px; border: 1px solid #e2e8f0; font-size: 12px; line-height: 1.4;">${locationInfo}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- ASC & MC -->
+                    <div style="margin-bottom: 35px; display: flex; gap: 20px;">
+                        <div style="flex: 1; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; text-align: center; background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                            <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 500; letter-spacing: 0.5px;">ASC (アセンダント)</div>
+                            <div style="font-size: 16px; font-weight: bold; color: #ec4899; margin-top: 6px;">${ascVal}</div>
+                        </div>
+                        <div style="flex: 1; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; text-align: center; background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                            <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 500; letter-spacing: 0.5px;">MC (ミディアム・コエリ)</div>
+                            <div style="font-size: 16px; font-weight: bold; color: #ec4899; margin-top: 6px;">${mcVal}</div>
+                        </div>
+                    </div>
+
+                    <!-- カスプ表 -->
+                    <div>
+                        <h3 style="font-size: 16px; border-left: 4px solid #ec4899; padding-left: 10px; margin-bottom: 15px; color: #1e1b4b; font-weight: bold;">ハウス・カスプ一覧</h3>
+                        ${tableHtml}
+                    </div>
+                </div>
+
+                <!-- フッター -->
+                <div style="text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px dashed #e2e8f0; padding-top: 15px; margin-top: auto;">
+                    Page 1 / 2 &mdash; Created by HANA Astrology Cusp App
+                </div>
+            `;
+            printContainer.appendChild(page1Div);
+
+            // 2ページ目のコンテナ
+            const page2Div = document.createElement('div');
+            page2Div.style.width = '794px';
+            page2Div.style.height = '1123px';
+            page2Div.style.padding = '60px 50px';
+            page2Div.style.boxSizing = 'border-box';
+            page2Div.style.display = 'flex';
+            page2Div.style.flexDirection = 'column';
+            page2Div.style.justifyContent = 'space-between';
+
+            // 生命の樹のコンテナをクローン
+            const treeContainerClone = document.createElement('div');
+            treeContainerClone.style.flex = '1';
+            treeContainerClone.style.display = 'flex';
+            treeContainerClone.style.flexDirection = 'column';
+            treeContainerClone.style.justifyContent = 'center';
+            treeContainerClone.style.alignItems = 'center';
+
+            const treeClone = document.getElementById('treeContainer').cloneNode(true);
+            treeClone.id = 'treeContainer-pdf';
+            treeClone.style.background = 'transparent';
+            treeClone.style.border = 'none';
+            treeClone.style.boxShadow = 'none';
+            treeClone.style.width = '500px';
+            treeClone.style.maxWidth = '500px';
+            treeClone.style.margin = '20px auto 0 auto';
+            treeClone.style.overflow = 'visible';
+
+            // SVGラインを細くして色を調整する（補助線として見せる）
+            const lines = treeClone.querySelectorAll('.tree-svg line');
+            lines.forEach(line => {
+                line.style.stroke = 'rgba(191, 199, 216, 0.4)'; // #BFC7D8 透明度40%
+                line.style.strokeWidth = '2px';
+                line.style.vectorEffect = 'non-scaling-stroke';
+            });
+
+            // SVG要素自体の大きさを固定
+            const svg = treeClone.querySelector('.tree-svg');
+            if (svg) {
+                svg.style.width = '100%';
+                svg.style.height = '100%';
+                svg.setAttribute('width', '500');
+                svg.setAttribute('height', '625');
+            }
+
+            // 各丸のスタイル調整
+            const cloneNodes = treeClone.querySelectorAll('.tree-node');
+            cloneNodes.forEach(node => {
+                const origNode = document.getElementById(node.id);
+                if (origNode) {
+                    node.style.background = origNode.style.background;
+                    node.style.color = '#ffffff'; // すべて白文字で統一
+                    node.style.borderColor = origNode.style.borderColor;
+                    node.style.boxShadow = origNode.style.boxShadow;
+                    node.style.textShadow = origNode.style.textShadow;
+                    
+                    const houseLabel = node.querySelector('.house-label');
+                    const signLabel = node.querySelector('.sign-label');
+                    const colorLabel = node.querySelector('.color-label');
+                    const meaningLabel = node.querySelector('.meaning-label');
+                    
+                    houseLabel.style.color = '#ffffff'; // すべて白文字で統一
+                    houseLabel.style.fontSize = '12px';
+                    signLabel.style.color = '#ffffff'; // すべて白文字で統一
+                    signLabel.style.fontSize = '12px';
+                    colorLabel.style.color = '#ffffff'; // すべて白文字で統一
+                    colorLabel.style.fontSize = '10px';
+
+                    meaningLabel.innerText = origNode.querySelector('.meaning-label').innerText;
+                    meaningLabel.style.color = '#2f2f2f'; // 説明文は濃いグレーに統一
+                    meaningLabel.style.fontWeight = '600';
+                    meaningLabel.style.fontSize = '10px';
+                    meaningLabel.style.top = '105%';
+                    meaningLabel.style.whiteSpace = 'nowrap'; // PDFでは折り返さず綺麗に表示
+                }
+            });
+
+            page2Div.innerHTML = `
+                <div>
+                    <!-- ヘッダー -->
+                    <div style="text-align: center; border-bottom: 2px solid #a855f7; padding-bottom: 20px; margin-bottom: 30px;">
+                        <h1 style="font-family: 'Cinzel', serif; font-size: 28px; color: #1e1b4b; margin: 0; letter-spacing: 3px; font-weight: 700;">HANA 生命の樹カラー鑑定書</h1>
+                        <p style="font-size: 12px; color: #64748b; margin-top: 6px; letter-spacing: 2px;">LIFE OF TREE COLOR MAP</p>
+                    </div>
+
+                    <!-- 生命の樹タイトル -->
+                    <div>
+                        <h3 style="font-size: 16px; border-left: 4px solid #ec4899; padding-left: 10px; margin-bottom: 10px; color: #1e1b4b; font-weight: bold;">生命の樹カラーマップ</h3>
+                    </div>
+                </div>
+            `;
+
+            treeContainerClone.appendChild(treeClone);
+            page2Div.appendChild(treeContainerClone);
+
+            // 2ページ目フッター
+            const footer2 = document.createElement('div');
+            footer2.style.textAlign = 'center';
+            footer2.style.fontSize = '10px';
+            footer2.style.color = '#94a3b8';
+            footer2.style.borderTop = '1px dashed #e2e8f0';
+            footer2.style.paddingTop = '15px';
+            footer2.style.marginTop = '20px';
+            footer2.innerHTML = 'Page 2 / 2 &mdash; Created by HANA Astrology Cusp App';
+            page2Div.appendChild(footer2);
+
+            printContainer.appendChild(page2Div);
+
+            document.body.appendChild(printContainer);
+
+            try {
+                const opt = {
+                    scale: 2, // 高精細化
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#fbf9f3'
+                };
+
+                // 1ページ目のレンダリング
+                const canvas1 = await html2canvas(page1Div, opt);
+                const imgData1 = canvas1.toDataURL('image/jpeg', 1.0);
+
+                // 2ページ目のレンダリング
+                const canvas2 = await html2canvas(page2Div, opt);
+                const imgData2 = canvas2.toDataURL('image/jpeg', 1.0);
+
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+
+                pdf.addImage(imgData1, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                pdf.addPage();
+                pdf.addImage(imgData2, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+
+                pdf.save('hana_astrology_report.pdf');
+            } catch (error) {
+                console.error('PDF生成中にエラーが発生しました:', error);
+                alert('PDF鑑定書の作成中にエラーが発生しました。詳細: ' + error.message);
+            } finally {
+                document.body.removeChild(printContainer);
+                btnPdf.disabled = false;
+                btnPdf.innerText = originalText;
             }
         }
     </script>
